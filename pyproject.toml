@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "family-e-ink-dashboard"
+version = "0.10.0"
+description = "E-Ink dashboard showing weather and a family calendar running on an Inkplate 10, rendering done in a Docker container"
+authors = ["speedyg0nz", "stefanthoss"]
+license = "Apache License 2.0"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+fastapi = "^0.115.12"
+jinja2 = "^3.1.6"
+pillow = "^11.0.0"
+pytz = "^2025.2"
+recurring-ical-events = "^3.6.1"
+requests = "^2.32.3"
+selenium = "^4.26.1"
+structlog = "^24.4.0"
+uvicorn = "^0.34.1"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.12.10"
+pytest = "^8.4.1"
+pytest-mock = "^3.14.1"
+pytest-cov = "^6.2.1"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E712"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

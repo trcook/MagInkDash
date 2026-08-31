@@ -1,0 +1,16 @@
+services:
+  family-e-ink-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: family-e-ink-dashboard
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - LOG_LEVEL=DEBUG
+      - OWM_API_KEY=
+      - ICS_URL=
+      - WEATHER_UNITS=imperial
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
