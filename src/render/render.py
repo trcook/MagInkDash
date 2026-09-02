@@ -145,7 +145,7 @@ class RenderHelper:
             if event["startDatetime"].time() == dt.time(0, 0, 0):
                 label = event["summary"]
             else:
-                label = f"{self.format_time(event['startDatetime'])} {event['summary']}"
+                label = f"{self.format_time(event['startDatetime'])} - {event['summary']}"
             if len(label) > 24:
                 label = label[:23] + "…"
             items.append(label)

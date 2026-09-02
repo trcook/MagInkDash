@@ -141,12 +141,33 @@ html, body {
     overflow-wrap: break-word;
 }
 
+/* Chromium gives the default inside disc marker a large fixed gap before the text
+   that cannot be reduced via margin or padding. Redefining the marker's content
+   removes that default gap; the \2009 (thin space) keeps a little breathing room.
+   Fine-tune the bullet-to-text gap by swapping \2022\2009 for e.g. \2022\200a
+   (hair space, tighter) or \2022\00a0 (regular space, wider), or \2022 (no gap). */
+.event::marker {
+    /* content: "\2022\2009\2009"; */
+    content:""
+}
+
 .event-empty {
     color: #aaa;
 }
 
 .event-time, .event-location {
-    color: gray;
+    color: #000;
+}
+
+/* Event time weight: this span gets the "Lexend-Regular" font from the global
+   `span` rule at the top of this file, but only the Regular (400) face of that
+   font is loaded, so the time rendered thinner than the event description (which
+   uses the page's body font at the weight 600 inherited from .event above).
+   `font-family: inherit` makes the time use the same font as the description so
+   the weights actually match. Fine-tune the time's weight via font-weight here. */
+.event-time {
+    font-family: inherit;
+    font-weight: 300;
 }
 
 .event-calendar-name {
