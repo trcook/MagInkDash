@@ -12,8 +12,9 @@
  *
  * @authors     Soldered.com, Chris Twomey
  ***************************************************/
-
-#include "libs/pngle/pngle.h"
+// 
+// #include "libs/pngle/pngle.h"
+#include "pngle.h"
 
 extern Image *_imagePtrPng;
 

@@ -1,15 +1,14 @@
 services:
   family-e-ink-dashboard:
-    image: ghcr.io/stefanthoss/family-e-ink-dashboard:latest
+    image: trcook/maginkdash:latest
     container_name: family-e-ink-dashboard
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "5002:5000"
     environment:
-      - OWM_API_KEY=
-      - ICS_URL=
-      - DISPLAY_TZ=
-      - LAT=
-      - LNG=
+      # - ICS_URL=moved to env file
+      - DISPLAY_TZ=America/Chicago
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]

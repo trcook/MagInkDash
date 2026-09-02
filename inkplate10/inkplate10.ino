@@ -5,7 +5,7 @@
   * https://github.com/SolderedElectronics/Inkplate-Arduino-library/blob/2dd263f2f9548aadac8638413a143beddf068a64/examples/Inkplate10/Advanced/DeepSleep/Inkplate10_Wake_Up_Button/Inkplate10_Wake_Up_Button.ino
 
   What this code does:
-    1. Connect to a WiFi access point
+     1. Connect to a WiFi access point
     2. Retrieve an image from a web address
     3. Display the image on the Inkplate 10 device
     4. Check the battery level on the Inkplate device
@@ -21,11 +21,9 @@
 #include "Inkplate.h"
 #include "WiFi.h"
 
-#include "lib/png_image_helper.cpp"
-
-char *ssid = "YOUR WIFI SSID";  // Your WiFi SSID
-char *pass = "YOUR WIFI PASSWORD";  // Your WiFi password
-String imgurl = "https://url-to-your-server/image";  // Your dashboard image web address
+char *ssid = "sheasbuffalo2017";  // Your WiFi SSID
+char *pass = "weheartkc1234!";  // Your WiFi password
+String imgurl = "http://192.168.1.167:5002/image";  // Your dashboard image web address
 
 #define BATTV_MAX 4.1  // maximum voltage of battery
 #define BATTV_MIN 3.2  // what we regard as an empty battery
@@ -46,6 +44,28 @@ void setup()
     display.print("Connecting to WiFi");
     display.partialUpdate();
 
+    int n = WiFi.scanNetworks(); // Start searching WiFi networks and put the nubmer of found WiFi networks in variable
+                                 // n
+    if (n == 0)
+    { // If you did not find any network, show the message and stop the program.
+        display.print("No WiFi networks found!");
+        display.partialUpdate();
+        while (true)
+            ;
+    }
+    else
+    {
+        if (n > 10)
+            n = 10; // If you did find, print name (SSID), encryption and signal strength of first 10 networks
+        for (int i = 0; i < n; i++)
+        {
+            display.print(WiFi.SSID(i));
+            display.print((WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? 'O' : '*');
+            display.print('\n');
+            display.print(WiFi.RSSI(i), DEC);
+        }
+    }
+    delay(2500);
     // Actually connect to the WiFi network
     WiFi.mode(WIFI_MODE_STA);
     WiFi.begin(ssid, pass);
@@ -62,7 +82,8 @@ void setup()
     display.partialUpdate();
 
     // Switch to 3-bit mode so the image will be of better quality
-    display.setDisplayMode(INKPLATE_3BIT);
+    // display.setDisplayMode(INKPLATE_3BIT);
+    display.selectDisplayMode(INKPLATE_3BIT); 
 
     // Make an object for the HTTP client
     HTTPClient http;
@@ -117,7 +138,7 @@ void setup()
             }
 
             // Draw image into the frame buffer of Inkplate
-            drawPngFromBuffer(buffer, size, 0, 0, true, false);
+            display.image.drawPngFromBuffer(buffer, size, 0, 0, true, false);
         }
         else
         {

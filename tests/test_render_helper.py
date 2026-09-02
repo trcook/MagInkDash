@@ -19,47 +19,6 @@ class HourMockConfig:
 class TestRenderHelper:
     """Test suite for RenderHelper class methods."""
 
-    def test_extend_list_shorter_list(self):
-        """Test extend_list when list is shorter than target length."""
-        test_list = ["item1", "item2"]
-        RenderHelper.extend_list(test_list, 5, "default")
-        expected = ["item1", "item2", "default", "default", "default"]
-        assert test_list == expected
-
-    def test_extend_list_empty_list(self):
-        """Test extend_list with empty list."""
-        test_list = []
-        RenderHelper.extend_list(test_list, 3, "default")
-        expected = ["default", "default", "default"]
-        assert test_list == expected
-
-    def test_extend_list_exact_length(self):
-        """Test extend_list when list is already the target length."""
-        test_list = ["item1", "item2", "item3"]
-        original_list = test_list.copy()
-        RenderHelper.extend_list(test_list, 3, "default")
-        assert test_list == original_list
-
-    def test_extend_list_longer_list(self):
-        """Test extend_list when list is longer than target length."""
-        test_list = ["item1", "item2", "item3", "item4", "item5"]
-        original_list = test_list.copy()
-        RenderHelper.extend_list(test_list, 3, "default")
-        assert test_list == original_list
-
-    def test_extend_list_zero_length(self):
-        """Test extend_list with zero target length."""
-        test_list = ["item1", "item2"]
-        original_list = test_list.copy()
-        RenderHelper.extend_list(test_list, 0, "default")
-        assert test_list == original_list
-
-    def test_extend_list_different_default_values(self):
-        """Test extend_list with different default value types."""
-        test_list = [1, 2]
-        RenderHelper.extend_list(test_list, 4, 0)
-        assert test_list == [1, 2, 0, 0]
-
     @pytest.mark.parametrize(
         "datetime_obj,expected",
         [

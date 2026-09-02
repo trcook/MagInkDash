@@ -6,7 +6,6 @@ instance, sized to the resolution of the eInk display and takes a screenshot.
 import datetime as dt
 import os
 import pathlib
-import string
 import subprocess
 from time import sleep
 from typing import Any, Dict, List
@@ -99,9 +98,6 @@ class RenderHelper:
     def process_inputs(
         self,
         current_time: dt.datetime,
-        current_weather: Dict[str, Any],
-        hourly_forecast: List[Dict[str, Any]],
-        daily_forecast: List[Dict[str, Any]],
         events: Dict[dt.date, List[Dict[str, Any]]],
         path_to_server_image: str,
     ) -> None:
@@ -111,134 +107,80 @@ class RenderHelper:
 
         current_date = current_time.date()
 
-        # Populate the date and events
-        cal_events_days: List[str] = []
-        cal_events_list: List[str] = []
-        for d, e in events.items():
-            cal_events_text = ""
-            for event in e:
-                cal_events_text += '<div class="event">'
-                # All-day events or continuations from yesterday start at midnight
-                if event["startDatetime"].time() == dt.time(0, 0, 0):
-                    cal_events_text += event["summary"]
-                else:
-                    cal_events_text += (
-                        '<span class="event-time">'
-                        + self.format_time(event["startDatetime"])
-                        + "</span> "
-                        + event["summary"]
-                    )
-                # Some clients set the location to empty string
-                if "location" in event and event["location"] != "":
-                    cal_events_text += (
-                        '<span class="event-location"> at ' + event["location"] + "</span>"
-                    )
-                if self.cfg.SHOW_CALENDAR_NAME and event["calendarName"] is not None:
-                    cal_events_text += (
-                        '<span class="event-calendar-name"> (' + event["calendarName"] + ")</span>"
-                    )
-                cal_events_text += "</div>\n"
-            if d == current_date:
-                cal_events_days.append("Today")
-            elif d == current_date + dt.timedelta(days=1):
-                cal_events_days.append("Tomorrow")
-            else:
-                cal_events_days.append(d.strftime("%A (%B %-d)"))
-            cal_events_list.append(cal_events_text)
+        # The week starts on Sunday
+        week_start = current_date - dt.timedelta(days=(current_date.weekday() + 1) % 7)
 
-        if len(cal_events_days) == 0:
-            cal_events_days.append("Next Days")
-            cal_events_list.append(
-                '<div class="event"><span class="event-time">No Events</span></div>'
+        week_days = []
+        for i in range(7):
+            day = week_start + dt.timedelta(days=i)
+            week_days.append(
+                {
+                    "name": day.strftime("%A"),
+                    "number": day.strftime("%-d"),
+                    "is_today": day == current_date,
+                    "events": self.build_events_html(events.get(day, [])),
+                }
             )
 
-        self.extend_list(cal_events_days, self.cfg.NUM_CAL_DAYS_TO_QUERY, "")
-        self.extend_list(cal_events_list, self.cfg.NUM_CAL_DAYS_TO_QUERY, "")
-
-        weather_add_info = "&nbsp;"
-        if self.cfg.SHOW_ADDITIONAL_WEATHER:
-            additional_infos = []
-            if round(current_weather["temp"]) != round(current_weather["feels_like"]):
-                additional_infos.append(f"Feels Like {round(current_weather['feels_like'])}°")
-            if (current_weather["sunrise"] < current_weather["dt"]) and (
-                current_weather["dt"] < current_weather["sunset"]
-            ):
-                additional_infos.append(f"UV Index {round(current_weather['uvi'])}")
-            weather_add_info = " | ".join(additional_infos)
-
-        today_moon_phase = ""
-        if self.cfg.SHOW_MOON_PHASE:
-            today_moon_phase = self.wi_moon_phase(daily_forecast[0]["moon_phase"])
-
-        # Append the bottom and write the file
+        # Write the file
         htmlFile = open(self.currPath + "/dashboard.html", "w")
         htmlFile.write(
             dashboard_template.render(
                 update_time=f"{current_time.strftime('%B %-d')}, {self.format_time(current_time)}",
                 day=current_date.strftime("%-d"),
-                month=current_date.strftime("%B"),
+                month=current_date.strftime("%B %Y"),
                 weekday=current_date.strftime("%A"),
-                dayaftertomorrow=(current_date + dt.timedelta(days=2)).strftime("%A"),
-                cal_days=cal_events_days,
-                cal_days_events=cal_events_list,
-                # I'm choosing to show the forecast for the next hour instead of the current weather
-                current_weather_text=string.capwords(current_weather["weather"][0]["description"]),
-                current_weather_id=current_weather["weather"][0]["id"],
-                current_weather_temp=f"{round(current_weather['temp'])}°",
-                current_weather_add_info=weather_add_info,
-                today_weather_id=daily_forecast[0]["weather"][0]["id"],
-                tomorrow_weather_id=daily_forecast[1]["weather"][0]["id"],
-                dayafter_weather_id=daily_forecast[2]["weather"][0]["id"],
-                today_weather_pop=str(round(daily_forecast[0]["pop"] * 100)),
-                tomorrow_weather_pop=str(round(daily_forecast[1]["pop"] * 100)),
-                dayafter_weather_pop=str(round(daily_forecast[2]["pop"] * 100)),
-                today_weather_min=str(round(daily_forecast[0]["temp"]["min"])),
-                tomorrow_weather_min=str(round(daily_forecast[1]["temp"]["min"])),
-                dayafter_weather_min=str(round(daily_forecast[2]["temp"]["min"])),
-                today_weather_max=str(round(daily_forecast[0]["temp"]["max"])),
-                tomorrow_weather_max=str(round(daily_forecast[1]["temp"]["max"])),
-                dayafter_weather_max=str(round(daily_forecast[2]["temp"]["max"])),
-                today_moon_phase=today_moon_phase,
+                week_days=week_days,
+                today_events=self.build_today_event_list(events.get(current_date, [])),
             )
         )
         htmlFile.close()
 
         self.get_screenshot(path_to_server_image)
 
+    def build_today_event_list(self, day_events: List[Dict[str, Any]]) -> List[str]:
+        # Small bulleted summary of today's events shown in the header
+        items = []
+        for event in day_events[:3]:
+            if event["startDatetime"].time() == dt.time(0, 0, 0):
+                label = event["summary"]
+            else:
+                label = f"{self.format_time(event['startDatetime'])} {event['summary']}"
+            if len(label) > 24:
+                label = label[:23] + "…"
+            items.append(label)
+        return items
+
+    def build_events_html(self, day_events: List[Dict[str, Any]]) -> str:
+        if not day_events:
+            return '<div class="event event-empty">&ndash;</div>'
+        cal_events_text = ""
+        for event in day_events:
+            cal_events_text += '<div class="event">'
+            # All-day events or continuations from yesterday start at midnight
+            if event["startDatetime"].time() == dt.time(0, 0, 0):
+                cal_events_text += event["summary"]
+            else:
+                cal_events_text += (
+                    '<span class="event-time">'
+                    + self.format_time(event["startDatetime"])
+                    + "</span> "
+                    + event["summary"]
+                )
+            # Some clients set the location to empty string
+            if "location" in event and event["location"] != "":
+                cal_events_text += (
+                    '<span class="event-location"> at ' + event["location"] + "</span>"
+                )
+            if self.cfg.SHOW_CALENDAR_NAME and event["calendarName"] is not None:
+                cal_events_text += (
+                    '<span class="event-calendar-name"> (' + event["calendarName"] + ")</span>"
+                )
+            cal_events_text += "</div>\n"
+        return cal_events_text
+
     def format_time(self, datetimeObj: dt.datetime) -> str:
         if self.cfg.USE_24H_FORMAT:
             return datetimeObj.strftime("%H:%M")
         else:
             return datetimeObj.strftime("%-I:%M%p").replace(":00", "").lower()
-
-    @classmethod
-    def extend_list(cls, my_list: List[str], new_length: int, default_value: str) -> None:
-        return my_list.extend([default_value] * (new_length - len(my_list)))
-
-    @classmethod
-    def wi_moon_phase(cls, value: float) -> str:
-        """
-        This function translates a number representing the phase of the moon as returned by the
-        OpenWeatherMap API into the equivalent Weather Icon name. The input value should be between
-        0 and 1, inclusive, where 0 and 1 represents a new moon, 0.25 represents a first quarter
-        moon, 0.5 represents a full moon, and 0.75 represents a last quarter moon.
-        """
-
-        phases = {
-            0.0: "wi-moon-new",
-            0.25: "wi-moon-first-quarter",
-            0.5: "wi-moon-full",
-            0.75: "wi-moon-third-quarter",
-            1.0: "wi-moon-new",
-        }
-
-        if value in phases:
-            return phases[value]
-        elif value < 0.25:
-            return f"wi-moon-waxing-crescent-{int(6 * value / 0.25)}"
-        elif value < 0.5:
-            return f"wi-moon-waxing-gibbous-{int((value - 0.25) * 6 / 0.25 + 1)}"
-        elif value < 0.75:
-            return f"wi-moon-waning-gibbous-{int((value - 0.5) * 6 / 0.25 + 1)}"
-        else:
-            return f"wi-moon-waning-crescent-{int((value - 0.75) * 6 / 0.25 + 1)}"

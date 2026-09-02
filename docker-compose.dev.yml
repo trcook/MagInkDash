@@ -6,11 +6,11 @@ services:
     container_name: family-e-ink-dashboard
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "5002:5000"
     environment:
       - LOG_LEVEL=DEBUG
-      - OWM_API_KEY=
-      - ICS_URL=
-      - WEATHER_UNITS=imperial
+      # - ICS_URL=moved to env file
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
