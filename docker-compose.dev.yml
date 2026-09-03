@@ -1,5 +1,6 @@
 services:
   family-e-ink-dashboard:
+    image: trcook/maginkdash:latest
     build:
       context: .
       dockerfile: Dockerfile
