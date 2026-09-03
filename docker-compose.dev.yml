@@ -9,6 +9,7 @@ services:
       - "5002:5000"
     environment:
       - LOG_LEVEL=DEBUG
+      - DISPLAY_TZ=America/Chicago
       # - ICS_URL=moved to env file
     env_file:
       - .env

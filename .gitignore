@@ -1,6 +1,7 @@
 # Rendering
 src/render/dashboard.html
 src/render/dashboard.png
+src/render/dashboard_mockup.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

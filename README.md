@@ -121,3 +121,12 @@ poetry run ruff format
 ## Contributing
 
 Feel free to fork the repo and modify it for your own purpose or create an issue and I see whether I can help.
+
+
+## build guide
+
+`>docker compose -f docker-compose.dev.yml build `
+
+`>docker tag <whatever the docker image name was> trcook/maginkdash:latest ` (needs to be done on non-apple machine)
+
+Then start with docker compose (make sure there's an env file with the ical calendar address in it.)

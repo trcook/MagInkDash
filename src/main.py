@@ -57,19 +57,19 @@ def get_image() -> FileResponse:
         cfg.ICS_URL, calStartDatetime, calEndDatetime, cfg.DISPLAY_TZ
     )
 
-    # Remove today's past events
-    if today in events:
-        filtered_events = []
-        for e in events[today]:
-            end_datetime = e["endDatetime"]
-            if end_datetime.tzinfo is None:
-                end_datetime = local_timezone.localize(end_datetime)
-            if end_datetime >= currTime:
-                filtered_events.append(e)
-        if filtered_events:
-            events[today] = filtered_events
-        else:
-            del events[today]
+    # Disabled: keep today's past events visible
+    # if today in events:
+    #     filtered_events = []
+    #     for e in events[today]:
+    #         end_datetime = e["endDatetime"]
+    #         if end_datetime.tzinfo is None:
+    #             end_datetime = local_timezone.localize(end_datetime)
+    #         if end_datetime >= currTime:
+    #             filtered_events.append(e)
+    #     if filtered_events:
+    #         events[today] = filtered_events
+    #     else:
+    #         del events[today]
 
     end_time = time.time()
     logger.info(f"Completed data retrieval in {round(end_time - start_time, 3)} seconds.")
